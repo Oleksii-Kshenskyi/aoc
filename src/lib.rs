@@ -1,7 +1,11 @@
-use std::fs;
+use std::{env, fs};
 
 fn get_file_lines(filename: &str) -> Option<Vec<String>> {
-    match fs::read_to_string(format!("../inputs/{}", filename)) {
+    match fs::read_to_string(format!(
+        "{}/inputs/{}",
+        env::current_dir().unwrap().display(),
+        filename
+    )) {
         Ok(s) => Some(s.lines().map(String::from).collect()),
         Err(_) => None,
     }
