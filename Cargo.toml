@@ -16,5 +16,9 @@ path = "src/2022/day-01.rs"
 name = "2023-day-01"
 path = "src/2023/day-01.rs"
 
+[[bin]]
+name = "2023-day-02"
+path = "src/2023/day-02.rs"
+
 [dependencies]
 anyhow = "1.0.79"
