@@ -20,6 +20,11 @@ path = "src/2023/day-01.rs"
 name = "2023-day-02"
 path = "src/2023/day-02.rs"
 
+[[bin]]
+name = "2023-day-03"
+path = "src/2023/day-03.rs"
+
 [dependencies]
 anyhow = "1.0.79"
+ndarray = "0.15.6"
 regex = "1.10.3"
