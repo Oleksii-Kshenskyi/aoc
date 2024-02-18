@@ -47,3 +47,52 @@ impl DayResults {
         )
     }
 }
+
+#[derive(Debug)]
+pub struct CharField {
+    field: Vec<Vec<char>>,
+    capacity: (usize, usize),
+}
+
+impl CharField {
+    pub fn from_lines(lines: &Vec<String>) -> Option<Self> {
+        let ex_len = lines.get(0).unwrap().len();
+        if !lines.iter().map(|l| l.len()).all(|ln| ln == ex_len) {
+            return None;
+        }
+
+        let mut new_field: Vec<Vec<char>> = vec![];
+        for line in lines {
+            new_field.push(line.chars().collect());
+        }
+
+        Some(Self {
+            field: new_field,
+            capacity: (lines.len(), ex_len),
+        })
+    }
+
+    pub fn num_rows(&self) -> usize {
+        self.field.len()
+    }
+
+    pub fn num_cols(&self) -> usize {
+        self.field.get(0).unwrap_or(&vec![]).len()
+    }
+
+    pub fn get(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if row >= self.num_rows() || col >= self.num_cols() {
+            return Err("Cannot get char in CharField: index out of bounds");
+        }
+
+        Ok(self.field.get(row).unwrap().get(col).unwrap().clone())
+    }
+
+    pub fn set(&mut self, row: usize, col: usize) -> Result<(), &'static str> {
+        if row >= self.num_rows() || col >= self.num_cols() {
+            return Err("Cannot set char in CharField: index out of bounds");
+        }
+
+        Ok(())
+    }
+}

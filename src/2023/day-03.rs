@@ -1,14 +1,26 @@
+use aoc::CharField;
+
 const YEAR: &'static str = "2023";
 const DAY: &'static str = "03";
 
-struct Schematic {}
-
-fn input_to_schematic(_input: &Vec<String>) -> Schematic {
-    Schematic {}
+struct Schematic {
+    pub field: CharField,
 }
 
-fn part1(_schematic: &Schematic) -> String {
-    "1".to_string()
+impl Schematic {
+    pub fn new(input: &Vec<String>) -> Self {
+        Self {
+            field: CharField::from_lines(input).unwrap(),
+        }
+    }
+}
+
+fn part1(schematic: &Schematic) -> String {
+    format!(
+        "Char(3,8): {}, Char(9,7): {};",
+        schematic.field.get(3, 8).unwrap(),
+        schematic.field.get(9, 7).unwrap(),
+    )
 }
 
 fn part2(_schematic: &Schematic) -> String {
@@ -20,7 +32,7 @@ fn main() {
 
     let sample_res = match &inputs.sample {
         Some(input) => {
-            let schematic = input_to_schematic(input);
+            let schematic = Schematic::new(input);
             aoc::DayResults::new(part1(&schematic), part2(&schematic))
         }
         None => aoc::DayResults::new(
@@ -32,7 +44,7 @@ fn main() {
 
     let input_res = match &inputs.input {
         Some(input) => {
-            let schematic = input_to_schematic(input);
+            let schematic = Schematic::new(input);
             aoc::DayResults::new(part1(&schematic), part2(&schematic))
         }
         None => aoc::DayResults::new(
