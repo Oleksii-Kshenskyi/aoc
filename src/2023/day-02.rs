@@ -20,6 +20,10 @@ impl CubeSet {
             blue: 0,
         }
     }
+
+    pub fn power(&self) -> u32 {
+        (self.red * self.green * self.blue) as u32
+    }
 }
 
 #[derive(Debug)]
@@ -52,6 +56,20 @@ impl Game {
             }
         }
         true
+    }
+
+    pub fn minimum_set(&self) -> CubeSet {
+        let (reds, greens, blues) = (
+            self.sets.iter().map(|s| s.red),
+            self.sets.iter().map(|s| s.green),
+            self.sets.iter().map(|s| s.blue),
+        );
+
+        CubeSet {
+            red: reds.max().unwrap_or(0),
+            green: greens.max().unwrap_or(0),
+            blue: blues.max().unwrap_or(0),
+        }
     }
 }
 
@@ -92,8 +110,8 @@ fn input_to_games(input: &Vec<String>) -> Vec<Game> {
     games
 }
 
-fn part1(input: &Vec<String>) -> String {
-    input_to_games(input)
+fn part1(games: &Vec<Game>) -> String {
+    games
         .iter()
         .filter(|g| g.is_possible())
         .map(|g| g.id)
@@ -101,15 +119,23 @@ fn part1(input: &Vec<String>) -> String {
         .to_string()
 }
 
-fn part2(_input: &Vec<String>) -> String {
-    "2".to_string()
+fn part2(games: &Vec<Game>) -> String {
+    games
+        .iter()
+        .map(|g| g.minimum_set())
+        .map(|gs| gs.power())
+        .sum::<u32>()
+        .to_string()
 }
 
 fn main() {
     let inputs = aoc::Inputs::new(YEAR, DAY);
 
     let sample_res = match &inputs.sample {
-        Some(input) => aoc::DayResults::new(part1(input), part2(input)),
+        Some(input) => {
+            let games = input_to_games(input);
+            aoc::DayResults::new(part1(&games), part2(&games))
+        }
         None => aoc::DayResults::new(
             "<SAMPLE INPUT UNAVAILABLE>".to_string(),
             "<SAMPLE INPUT UNAVAILABLE>".to_string(),
@@ -118,7 +144,10 @@ fn main() {
     sample_res.print("=> Sample Results:");
 
     let input_res = match &inputs.input {
-        Some(input) => aoc::DayResults::new(part1(input), part2(input)),
+        Some(input) => {
+            let games = input_to_games(input);
+            aoc::DayResults::new(part1(&games), part2(&games))
+        }
         None => aoc::DayResults::new(
             "<ACTUAL INPUT UNAVAILABLE>".to_string(),
             "<ACTUAL INPUT UNAVAILABLE>".to_string(),
