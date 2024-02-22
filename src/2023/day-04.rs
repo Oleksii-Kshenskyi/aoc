@@ -3,7 +3,7 @@ const DAY: &'static str = "04";
 
 use regex::Regex;
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug)]
 struct Card {
@@ -13,17 +13,18 @@ struct Card {
 }
 
 impl Card {
-    pub fn points(&self) -> u32 {
+    pub fn winning_numbers(&self) -> Vec<u8> {
         let winning_set: HashSet<_> = self.winning.clone().into_iter().collect();
 
-        let i_won = self
-            .mine
+        self.mine
             .iter()
             .filter(|n| winning_set.contains(n))
             .cloned()
-            .collect::<Vec<u8>>();
+            .collect::<Vec<u8>>()
+    }
 
-        2_u32.pow(i_won.len() as u32 - 1)
+    pub fn points(&self) -> u32 {
+        2_u32.pow(self.winning_numbers().len() as u32 - 1)
     }
 }
 
@@ -31,8 +32,26 @@ fn part1(cards: &Vec<Card>) -> String {
     cards.iter().map(|c| c.points()).sum::<u32>().to_string()
 }
 
-fn part2(_cards: &Vec<Card>) -> String {
-    "2".to_string()
+fn part2(cards: &Vec<Card>) -> String {
+    let mut card_counts: HashMap<usize, usize> = cards.iter().map(|c| (c.id, 1)).collect();
+
+    for card in cards {
+        let i_won_x_cards = card.winning_numbers().len();
+        let next_copies = card.id + i_won_x_cards;
+        let upper_limit = if next_copies < cards.len() {
+            next_copies
+        } else {
+            cards.len() - 1
+        };
+        for copy_id in card.id + 1..=upper_limit {
+            card_counts.insert(
+                copy_id,
+                card_counts.get(&copy_id).unwrap() + card_counts.get(&card.id).unwrap(),
+            );
+        }
+    }
+
+    card_counts.values().sum::<usize>().to_string()
 }
 
 fn convert_nums(nums_str: &str) -> Vec<u8> {
