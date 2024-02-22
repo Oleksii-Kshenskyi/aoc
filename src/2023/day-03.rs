@@ -12,12 +12,12 @@ struct FieldNumber {
 }
 
 impl FieldNumber {
-    fn zeroed() -> Self {
+    fn new(row: usize, col_start: usize, col_end: usize, value: u16) -> Self {
         Self {
-            row: 0,
-            col_start: 0,
-            col_end: 0,
-            value: 0,
+            row,
+            col_start,
+            col_end,
+            value,
         }
     }
 }
@@ -57,13 +57,16 @@ impl Schematic {
                     }
 
                     let left = field.left(currow, curcol);
-                    if !ch.is_numeric() && left.is_ok() && left.unwrap().is_numeric() {
-                        numbers.push(FieldNumber {
-                            row: currow,
+                    let right = field.right(currow, curcol);
+                    if (!ch.is_numeric() && left.is_ok() && left.unwrap().is_numeric())
+                        || (ch.is_numeric() && right.is_err())
+                    {
+                        numbers.push(FieldNumber::new(
+                            currow,
                             col_start,
                             col_end,
-                            value: str_num.parse::<u16>().unwrap(),
-                        });
+                            str_num.parse::<u16>().unwrap(),
+                        ));
                         str_num = "".to_string();
                         col_start = 0;
                         col_end = 0;
@@ -90,7 +93,31 @@ impl Schematic {
 
     pub fn adjacents(&self) -> Vec<u32> {
         let mut adj: Vec<u32> = vec![];
-        //let ch: char = 'r'; ch.is_ascii
+        for num in self.numbers.as_ref().unwrap() {
+            let mut is_adjacent = false;
+            if self.is_symbol(num.row - 1, num.col_start - 1) || // ul
+            self.is_symbol(num.row + 1, num.col_start - 1) || // dl
+            self.is_symbol(num.row - 1, num.col_end + 1) || // ur
+            self.is_symbol(num.row + 1, num.col_end + 1)
+            // dr
+            {
+                is_adjacent = true;
+            }
+            for curcol in num.col_start..=num.col_end {
+                if self.is_symbol(num.row - 1, curcol) || self.is_symbol(num.row + 1, curcol) {
+                    is_adjacent = true;
+                }
+            }
+            if self.is_symbol(num.row, num.col_start - 1)
+                || self.is_symbol(num.row, num.col_end + 1)
+            {
+                is_adjacent = true;
+            }
+
+            if is_adjacent {
+                adj.push(num.value as u32);
+            }
+        }
         adj
     }
 }
