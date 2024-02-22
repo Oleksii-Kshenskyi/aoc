@@ -95,4 +95,76 @@ impl CharField {
 
         Ok(())
     }
+
+    pub fn above(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if row == 0 {
+            return Err("CharField::above(): target is already in the uppermost row");
+        }
+
+        Ok(self.get(row - 1, col).unwrap())
+    }
+
+    pub fn below(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if row >= self.num_rows() - 1 {
+            return Err("CharField::below(): there is nothing below this coordinate");
+        }
+
+        Ok(self.get(row + 1, col).unwrap())
+    }
+
+    pub fn left(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if col == 0 {
+            return Err("CharField::left(): target is already in the leftmost row");
+        }
+
+        Ok(self.get(row, col - 1).unwrap())
+    }
+
+    pub fn right(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if col >= self.num_cols() - 1 {
+            return Err("CharField::right(): there is nothing to the right of this coordinate");
+        }
+
+        Ok(self.get(row, col + 1).unwrap())
+    }
+
+    pub fn diag_ul(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if row == 0 || col == 0 {
+            return Err(
+                "CharField::diag_ul(): there is nothing to the upper left of this coordinate",
+            );
+        }
+
+        Ok(self.get(row - 1, col - 1).unwrap())
+    }
+
+    pub fn diag_ur(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if row == 0 || col >= self.num_cols() - 1 {
+            return Err(
+                "CharField::diag_ur(): there is nothing to the upper right of this coordinate",
+            );
+        }
+
+        Ok(self.get(row - 1, col + 1).unwrap())
+    }
+
+    pub fn diag_dl(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if row >= self.num_rows() - 1 || col == 0 {
+            return Err(
+                "CharField::diag_dl(): there is nothing to the lower left of this coordinate",
+            );
+        }
+
+        Ok(self.get(row + 1, col - 1).unwrap())
+    }
+
+    pub fn diag_dr(&self, row: usize, col: usize) -> Result<char, &'static str> {
+        if row >= self.num_rows() - 1 || col >= self.num_cols() - 1 {
+            return Err(
+                "CharField::diag_dr(): there is nothing to the lower right of this coordinate",
+            );
+        }
+
+        Ok(self.get(row + 1, col + 1).unwrap())
+    }
 }
