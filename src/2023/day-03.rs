@@ -1,14 +1,16 @@
 use aoc::CharField;
 
+use std::{collections::HashSet, hash::Hash};
+
 const YEAR: &'static str = "2023";
 const DAY: &'static str = "03";
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 struct FieldNumber {
-    pub row: usize,
-    pub col_start: usize,
-    pub col_end: usize,
-    pub value: u16,
+    row: usize,
+    col_start: usize,
+    col_end: usize,
+    value: u16,
 }
 
 impl FieldNumber {
@@ -20,6 +22,24 @@ impl FieldNumber {
             value,
         }
     }
+
+    pub fn is_adjacent_to(&self, fch: &FieldChar) -> bool {
+        (self.row >= fch.row - 1 && self.row <= fch.row + 1)
+            && ((self.col_start >= fch.col - 1 && self.col_start <= fch.col + 1)
+                || self.col_end >= fch.col - 1 && self.col_end <= fch.col + 1)
+    }
+}
+
+struct FieldChar {
+    row: usize,
+    col: usize,
+    ch: char,
+}
+
+impl FieldChar {
+    pub fn new(ch: char, row: usize, col: usize) -> Self {
+        FieldChar { ch, row, col }
+    }
 }
 
 struct Schematic {
@@ -28,11 +48,13 @@ struct Schematic {
 }
 
 impl Schematic {
-    fn is_symbol(&self, row: usize, col: usize) -> bool {
+    fn is_symbol(&self, row: usize, col: usize) -> Option<FieldChar> {
         if let Ok(ch) = self.field.get(row, col) {
-            return !ch.is_alphanumeric() && ch != '.';
+            if !ch.is_alphanumeric() && ch != '.' {
+                return Some(FieldChar::new(ch, row, col));
+            }
         }
-        false
+        None
     }
 
     fn extract_numbers(field: &CharField) -> Option<Vec<FieldNumber>> {
@@ -83,6 +105,34 @@ impl Schematic {
         }
     }
 
+    fn gear_adjacents(&self) -> Vec<Vec<FieldNumber>> {
+        let mut gear_adjs: Vec<Vec<FieldNumber>> = vec![];
+        let sym_adjs = self.adjacents();
+        let gear_chars = self.find_gears();
+
+        for gear_ch in gear_chars {
+            let relevant_adjs = sym_adjs
+                .iter()
+                .filter(|adj| adj.row >= gear_ch.row - 1 && adj.row <= gear_ch.row + 1)
+                .collect::<Vec<&FieldNumber>>();
+            let cur_adjs = relevant_adjs
+                .into_iter()
+                .filter(|adj| adj.is_adjacent_to(&gear_ch))
+                .collect::<Vec<&FieldNumber>>();
+
+            let mut unique_checker: HashSet<FieldNumber> = HashSet::new();
+            gear_adjs.push(
+                cur_adjs
+                    .into_iter()
+                    .cloned()
+                    .filter(|adj| unique_checker.insert(adj.clone()))
+                    .collect(),
+            );
+        }
+
+        gear_adjs
+    }
+
     pub fn new(input: &Vec<String>) -> Self {
         let field = CharField::from_lines(input).unwrap();
         Self {
@@ -91,43 +141,73 @@ impl Schematic {
         }
     }
 
-    pub fn adjacents(&self) -> Vec<u32> {
-        let mut adj: Vec<u32> = vec![];
+    pub fn adjacents(&self) -> Vec<FieldNumber> {
+        let mut adj: Vec<FieldNumber> = vec![];
         for num in self.numbers.as_ref().unwrap() {
             let mut is_adjacent = false;
-            if self.is_symbol(num.row - 1, num.col_start - 1) || // ul
-            self.is_symbol(num.row + 1, num.col_start - 1) || // dl
-            self.is_symbol(num.row - 1, num.col_end + 1) || // ur
-            self.is_symbol(num.row + 1, num.col_end + 1)
+            if self.is_symbol(num.row - 1, num.col_start - 1).is_some() || // ul
+            self.is_symbol(num.row + 1, num.col_start - 1).is_some() || // dl
+            self.is_symbol(num.row - 1, num.col_end + 1).is_some() || // ur
+            self.is_symbol(num.row + 1, num.col_end + 1).is_some()
             // dr
             {
                 is_adjacent = true;
             }
             for curcol in num.col_start..=num.col_end {
-                if self.is_symbol(num.row - 1, curcol) || self.is_symbol(num.row + 1, curcol) {
+                if self.is_symbol(num.row - 1, curcol).is_some()
+                    || self.is_symbol(num.row + 1, curcol).is_some()
+                {
                     is_adjacent = true;
                 }
             }
-            if self.is_symbol(num.row, num.col_start - 1)
-                || self.is_symbol(num.row, num.col_end + 1)
+            if self.is_symbol(num.row, num.col_start - 1).is_some()
+                || self.is_symbol(num.row, num.col_end + 1).is_some()
             {
                 is_adjacent = true;
             }
 
             if is_adjacent {
-                adj.push(num.value as u32);
+                adj.push(num.clone());
             }
         }
         adj
     }
+
+    pub fn find_gears(&self) -> Vec<FieldChar> {
+        let mut gears: Vec<FieldChar> = vec![];
+        for row in 0..self.field.num_rows() {
+            for col in 0..self.field.num_cols() {
+                if let Some(ch) = self.is_symbol(row, col) {
+                    if ch.ch == '*' {
+                        gears.push(ch);
+                    }
+                }
+            }
+        }
+
+        gears
+    }
+
+    pub fn find_gear_ratios(&self) -> Vec<u32> {
+        self.gear_adjacents()
+            .iter()
+            .filter(|ga| ga.len() == 2)
+            .map(|ga| ga.get(0).unwrap().value as u32 * ga.get(1).unwrap().value as u32)
+            .collect::<Vec<u32>>()
+    }
 }
 
 fn part1(schematic: &Schematic) -> String {
-    schematic.adjacents().iter().sum::<u32>().to_string()
+    schematic
+        .adjacents()
+        .iter()
+        .map(|fien| fien.value as u32)
+        .sum::<u32>()
+        .to_string()
 }
 
-fn part2(_schematic: &Schematic) -> String {
-    "2".to_string()
+fn part2(schematic: &Schematic) -> String {
+    schematic.find_gear_ratios().iter().sum::<u32>().to_string()
 }
 
 fn main() {

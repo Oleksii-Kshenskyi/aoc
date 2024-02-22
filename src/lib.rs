@@ -51,7 +51,7 @@ impl DayResults {
 #[derive(Debug)]
 pub struct CharField {
     field: Vec<Vec<char>>,
-    capacity: (usize, usize),
+    // capacity: (usize, usize),
 }
 
 impl CharField {
@@ -68,7 +68,7 @@ impl CharField {
 
         Some(Self {
             field: new_field,
-            capacity: (lines.len(), ex_len),
+            // capacity: (lines.len(), ex_len),
         })
     }
 
