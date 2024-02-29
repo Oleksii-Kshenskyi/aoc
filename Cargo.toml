@@ -28,7 +28,10 @@ path = "src/2023/day-03.rs"
 name = "2023-day-04"
 path = "src/2023/day-04.rs"
 
+[[bin]]
+name = "2023-day-05"
+path = "src/2023/day-05.rs"
+
 [dependencies]
 anyhow = "1.0.79"
-ndarray = "0.15.6"
 regex = "1.10.3"

@@ -36,6 +36,9 @@ fn part2(cards: &Vec<Card>) -> String {
     let mut card_counts: HashMap<usize, usize> = cards.iter().map(|c| (c.id, 1)).collect();
 
     for card in cards {
+        // the overall result for actual input is for some reason incorrect
+        // this is verified to be correct up until card 20 (inclusive)
+        // (correct for sample input)
         let i_won_x_cards = card.winning_numbers().len();
         let next_copies = card.id + i_won_x_cards;
         let upper_limit = if next_copies < cards.len() {
