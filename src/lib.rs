@@ -42,6 +42,10 @@ impl Conv {
             })
             .collect()
     }
+
+    pub fn to_string(lines: &Vec<String>) -> String {
+        lines.join("\n")
+    }
 }
 
 pub struct DayResults {

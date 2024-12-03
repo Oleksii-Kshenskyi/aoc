@@ -27,11 +27,68 @@ impl Reports {
     }
 
     pub fn check_safety(&self) -> Vec<u8> {
-        let pairs: Vec<Vec<&[u32]>> = self
-            .reports
+        let (inc_or_dec, within_range) = self.base_conditions();
+
+        inc_or_dec
+            .iter()
+            .zip(within_range)
+            .map(|(id, wr)| (*id && wr) as u8)
+            .collect::<Vec<_>>()
+    }
+
+    pub fn safety_dampened(&self) -> Vec<u8> {
+        let (inc_or_dec, within_range) = self.base_conditions();
+        let pairs = self.pair_windows();
+        let orderings: Vec<Vec<Ordering>> = pairs
+            .iter()
+            .map(|pairvec| {
+                pairvec
+                    .iter()
+                    .map(|pair| pair[0].cmp(&pair[1]))
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        let ordpairs: Vec<Vec<&[Ordering]>> = orderings
+            .iter()
+            .map(|ords| ords.windows(2).collect())
+            .collect();
+        let problemcounts: Vec<bool> = ordpairs
+            .iter()
+            .map(|ordvec| {
+                let sins = ordvec.iter().fold(0, |acc, pair| {
+                    if (pair[0] == Ordering::Greater && pair[1] == Ordering::Greater)
+                        || (pair[0] == Ordering::Less && pair[1] == Ordering::Less)
+                    {
+                        acc
+                    } else {
+                        acc + 1
+                    }
+                }) as u8;
+                sins / 2
+            })
+            .map(|prc| prc < 2)
+            .collect();
+
+        dbg!(&problemcounts);
+        dbg!(&inc_or_dec);
+        dbg!(&within_range);
+        problemcounts
+            .iter()
+            .zip(inc_or_dec)
+            .zip(within_range)
+            .map(|((prc, iod), wr)| ((wr || *prc) && iod) as u8)
+            .collect::<Vec<u8>>()
+    }
+
+    fn pair_windows(&self) -> Vec<Vec<&[u32]>> {
+        self.reports
             .iter()
             .map(|report| report.windows(2).collect::<Vec<&[u32]>>())
-            .collect();
+            .collect()
+    }
+
+    fn base_conditions(&self) -> (Vec<bool>, Vec<bool>) {
+        let pairs = self.pair_windows();
         let inc = pairs
             .iter()
             .map(|pairvec| {
@@ -64,20 +121,26 @@ impl Reports {
             })
             .collect::<Vec<_>>();
 
-        inc_or_dec
-            .iter()
-            .zip(within_range)
-            .map(|(id, wr)| (*id && wr) as u8)
-            .collect::<Vec<_>>()
+        (inc_or_dec, within_range)
     }
 }
 
 fn part1(lists: &Vec<String>) -> String {
-    Reports::new(lists).check_safety().iter().map(|ue| *ue as u64).sum::<u64>().to_string()
+    Reports::new(lists)
+        .check_safety()
+        .iter()
+        .map(|ue| *ue as u64)
+        .sum::<u64>()
+        .to_string()
 }
 
-fn part2(_lists: &Vec<String>) -> String {
-    "2".to_owned()
+fn part2(lists: &Vec<String>) -> String {
+    Reports::new(lists)
+        .safety_dampened()
+        .iter()
+        .map(|ue| *ue as u64)
+        .sum::<u64>()
+        .to_string()
 }
 
 fn main() {
