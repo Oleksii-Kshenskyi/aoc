@@ -27,6 +27,23 @@ impl Inputs {
     }
 }
 
+pub struct Conv;
+impl Conv {
+    pub fn to_matrix(lines: &Vec<String>) -> Vec<Vec<u32>> {
+        lines
+            .iter()
+            .map(|s| {
+                s.split_whitespace()
+                    .map(|sn| {
+                        sn.parse::<u32>()
+                            .expect("Conv::to_matrix(): an element is not a number!")
+                    })
+                    .collect()
+            })
+            .collect()
+    }
+}
+
 pub struct DayResults {
     pub part1: String,
     pub part2: String,

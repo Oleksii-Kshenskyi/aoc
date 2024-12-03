@@ -1,6 +1,7 @@
 const YEAR: &'static str = "2024";
 const DAY: &'static str = "01";
 
+use aoc::Conv;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -11,14 +12,7 @@ struct Lists {
 impl Lists {
     pub fn new(lines: &Vec<String>) -> Self {
         Self {
-            numbers: lines
-                .iter()
-                .map(|s| {
-                    s.split_whitespace()
-                        .map(|sn| sn.parse::<u32>().expect(""))
-                        .collect()
-                })
-                .collect(),
+            numbers: Conv::to_matrix(lines),
         }
     }
 
