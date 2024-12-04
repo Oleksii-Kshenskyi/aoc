@@ -5,24 +5,25 @@ use std::cmp::Ordering;
 
 use aoc::Conv;
 
-#[derive(Debug)]
-pub struct Reports {
-    reports: Vec<Vec<u32>>,
+#[derive(Debug, Clone)]
+pub struct Level {
+    value: u32,
+}
+impl Level {
+    pub fn new(value: u32) -> Self {
+        Level { value }
+    }
 }
 
-/*          incdec  range
-    7 6 4 2 1 [true true]
-    1 2 7 8 9 [true false]
-    9 7 6 2 1 [true false]
-    1 3 2 4 5 [false true]
-    8 6 4 4 1 [false false]
-    1 3 6 7 9 [true true]
-*/
+#[derive(Debug)]
+pub struct Reports {
+    reports: Vec<Vec<Level>>,
+}
 
 impl Reports {
     pub fn new(lines: &Vec<String>) -> Self {
         Self {
-            reports: Conv::to_matrix(lines),
+            reports: Self::pack(Conv::to_matrix(lines)),
         }
     }
 
@@ -37,64 +38,65 @@ impl Reports {
     }
 
     pub fn safety_dampened(&self) -> Vec<u8> {
-        let (inc_or_dec, within_range) = self.base_conditions();
-        let pairs = self.pair_windows();
-        let orderings: Vec<Vec<Ordering>> = pairs
-            .iter()
-            .map(|pairvec| {
-                pairvec
-                    .iter()
-                    .map(|pair| pair[0].cmp(&pair[1]))
-                    .collect::<Vec<_>>()
-            })
-            .collect();
-        let ordpairs: Vec<Vec<&[Ordering]>> = orderings
-            .iter()
-            .map(|ords| ords.windows(2).collect())
-            .collect();
-        let problemcounts: Vec<bool> = ordpairs
-            .iter()
-            .map(|ordvec| {
-                let sins = ordvec.iter().fold(0, |acc, pair| {
-                    if (pair[0] == Ordering::Greater && pair[1] == Ordering::Greater)
-                        || (pair[0] == Ordering::Less && pair[1] == Ordering::Less)
-                    {
-                        acc
-                    } else {
-                        acc + 1
-                    }
-                }) as u8;
-                sins / 2
-            })
-            .map(|prc| prc < 2)
-            .collect();
-
-        dbg!(&problemcounts);
-        dbg!(&inc_or_dec);
-        dbg!(&within_range);
-        problemcounts
-            .iter()
-            .zip(inc_or_dec)
-            .zip(within_range)
-            .map(|((prc, iod), wr)| ((wr || *prc) && iod) as u8)
-            .collect::<Vec<u8>>()
-    }
-
-    fn pair_windows(&self) -> Vec<Vec<&[u32]>> {
         self.reports
             .iter()
-            .map(|report| report.windows(2).collect::<Vec<&[u32]>>())
+            .enumerate()
+            .map(|(_, report)| {
+                if Self::is_safe(report) {
+                    return 1;
+                }
+    
+                for i in 0..report.len() {
+                    let mut modified = report.clone();
+                    modified.remove(i);
+    
+                    if Self::is_safe(&modified) {
+                        return 1;
+                    }
+                }
+    
+                0
+            })
             .collect()
+    }
+    
+    fn is_safe(report: &Vec<Level>) -> bool {
+        let is_increasing = report
+            .windows(2)
+            .all(|pair| pair[0].value < pair[1].value);
+        let is_decreasing = report
+            .windows(2)
+            .all(|pair| pair[0].value > pair[1].value);
+        let within_range = report
+            .windows(2)
+            .all(|pair| pair[0].value.abs_diff(pair[1].value) <= 3);
+        let inc_or_dec = is_increasing || is_decreasing;
+    
+        inc_or_dec && within_range
+    }
+
+    fn pack(matrix: Vec<Vec<u32>>) -> Vec<Vec<Level>> {
+        matrix
+            .iter()
+            .map(|row| row.iter().map(|val| Level::new(*val)).collect())
+            .collect::<Vec<_>>()
+    }
+
+    fn slices(&self, size: usize) -> Vec<Vec<&[Level]>> {
+        self.reports
+            .iter()
+            .map(|report| report.windows(size).collect())
+            .collect::<Vec<Vec<&[Level]>>>()
     }
 
     fn base_conditions(&self) -> (Vec<bool>, Vec<bool>) {
-        let pairs = self.pair_windows();
+        let pairs = self.slices(2);
         let inc = pairs
             .iter()
             .map(|pairvec| {
                 pairvec
                     .iter()
-                    .map(|pair| pair[0].cmp(&pair[1]))
+                    .map(|pair| pair[0].value.cmp(&pair[1].value))
                     .all(|o| o == Ordering::Greater)
             })
             .collect::<Vec<_>>();
@@ -103,7 +105,7 @@ impl Reports {
             .map(|pairvec| {
                 pairvec
                     .iter()
-                    .map(|pair| pair[0].cmp(&pair[1]))
+                    .map(|pair| pair[0].value.cmp(&pair[1].value))
                     .all(|o| o == Ordering::Less)
             })
             .collect::<Vec<_>>();
@@ -117,7 +119,7 @@ impl Reports {
             .map(|pairvec| {
                 pairvec
                     .iter()
-                    .all(|pair| pair[0].abs_diff(pair[1]) > 0 && pair[0].abs_diff(pair[1]) <= 3)
+                    .all(|pair| pair[0].value.abs_diff(pair[1].value) <= 3)
             })
             .collect::<Vec<_>>();
 
