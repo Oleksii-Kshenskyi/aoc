@@ -45,33 +45,29 @@ impl Reports {
                 if Self::is_safe(report) {
                     return 1;
                 }
-    
+
                 for i in 0..report.len() {
                     let mut modified = report.clone();
                     modified.remove(i);
-    
+
                     if Self::is_safe(&modified) {
                         return 1;
                     }
                 }
-    
+
                 0
             })
             .collect()
     }
-    
+
     fn is_safe(report: &Vec<Level>) -> bool {
-        let is_increasing = report
-            .windows(2)
-            .all(|pair| pair[0].value < pair[1].value);
-        let is_decreasing = report
-            .windows(2)
-            .all(|pair| pair[0].value > pair[1].value);
+        let is_increasing = report.windows(2).all(|pair| pair[0].value < pair[1].value);
+        let is_decreasing = report.windows(2).all(|pair| pair[0].value > pair[1].value);
         let within_range = report
             .windows(2)
             .all(|pair| pair[0].value.abs_diff(pair[1].value) <= 3);
         let inc_or_dec = is_increasing || is_decreasing;
-    
+
         inc_or_dec && within_range
     }
 

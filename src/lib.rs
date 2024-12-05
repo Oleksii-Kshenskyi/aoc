@@ -1,4 +1,16 @@
-use std::{env, fs};
+use std::{env, fs, iter::Rev, ops::RangeInclusive};
+
+#[derive(Debug)]
+pub enum CharFieldDirection {
+    Forward,
+    Backwards,
+    Down,
+    Up,
+    DiagUpRight,
+    DiagDownRight,
+    DiagUpLeft,
+    DiagDownLeft,
+}
 
 fn get_file_lines(filename: &str) -> Option<Vec<String>> {
     match fs::read_to_string(format!(
@@ -187,5 +199,143 @@ impl CharField {
         }
 
         Ok(self.get(row + 1, col + 1).unwrap())
+    }
+
+    pub fn find_word(
+        &self,
+        starting_pos: (usize, usize),
+        word: &str,
+        direction: CharFieldDirection,
+    ) -> bool {
+        match direction {
+            CharFieldDirection::Forward => {
+                if word.len() > self.num_cols() || (self.num_cols() - starting_pos.1) < word.len() {
+                    return false;
+                }
+                for field_y in starting_pos.1..starting_pos.1 + word.len() {
+                    if self.get(starting_pos.0, field_y).unwrap()
+                        != word.chars().nth(field_y - starting_pos.1).unwrap()
+                    {
+                        return false;
+                    }
+                }
+                true
+            }
+            CharFieldDirection::Backwards => {
+                if word.len() > self.num_cols() || starting_pos.1 < word.len() - 1 {
+                    return false;
+                }
+                for field_y in Self::rev(starting_pos.1, starting_pos.1 + 1 - word.len()) {
+                    if self.get(starting_pos.0, field_y).unwrap()
+                        != word.chars().nth(starting_pos.1 - field_y).unwrap()
+                    {
+                        return false;
+                    }
+                }
+                true
+            }
+            CharFieldDirection::Down => {
+                if word.len() > self.num_rows() || (self.num_rows() - starting_pos.0) < word.len() {
+                    return false;
+                }
+                for field_x in starting_pos.0..starting_pos.0 + word.len() {
+                    if self.get(field_x, starting_pos.1).unwrap()
+                        != word.chars().nth(field_x - starting_pos.0).unwrap()
+                    {
+                        return false;
+                    }
+                }
+                true
+            }
+            CharFieldDirection::Up => {
+                if word.len() > self.num_rows() || starting_pos.0 < word.len() - 1 {
+                    return false;
+                }
+                for field_x in Self::rev(starting_pos.0, starting_pos.0 + 1 - word.len()) {
+                    if self.get(field_x, starting_pos.1).unwrap()
+                        != word.chars().nth(starting_pos.0 - field_x).unwrap()
+                    {
+                        return false;
+                    }
+                }
+                true
+            }
+            CharFieldDirection::DiagDownRight => {
+                if word.len() > self.num_cols() || (self.num_cols() - starting_pos.1) < word.len() {
+                    return false;
+                }
+                if word.len() > self.num_rows() || (self.num_rows() - starting_pos.0) < word.len() {
+                    return false;
+                }
+                for field_xy in 0..word.len() {
+                    if self
+                        .get(starting_pos.0 + field_xy, starting_pos.1 + field_xy)
+                        .unwrap()
+                        != word.chars().nth(field_xy).unwrap()
+                    {
+                        return false;
+                    }
+                }
+                true
+            }
+            CharFieldDirection::DiagUpLeft => {
+                if word.len() > self.num_rows() || starting_pos.0 < word.len() - 1 {
+                    return false;
+                }
+                if word.len() > self.num_cols() || starting_pos.1 < word.len() - 1 {
+                    return false;
+                }
+                for field_xy in Self::rev(word.len() - 1, 0) {
+                    if self
+                        .get(starting_pos.0 - field_xy, starting_pos.1 - field_xy)
+                        .unwrap()
+                        != word.chars().nth(field_xy).unwrap()
+                    {
+                        return false;
+                    }
+                }
+                true
+            }
+            CharFieldDirection::DiagDownLeft => {
+                if word.len() > self.num_rows() || (self.num_rows() - starting_pos.0) < word.len() {
+                    return false;
+                }
+                if word.len() > self.num_cols() || starting_pos.1 < word.len() - 1 {
+                    return false;
+                }
+                for field_xy in 0..word.len() {
+                    if self
+                        .get(starting_pos.0 + field_xy, starting_pos.1 - field_xy)
+                        .unwrap()
+                        != word.chars().nth(field_xy).unwrap()
+                    {
+                        return false;
+                    }
+                }
+                true
+            }
+            CharFieldDirection::DiagUpRight => {
+                if word.len() > self.num_rows() || starting_pos.0 < word.len() - 1 {
+                    return false;
+                }
+                if word.len() > self.num_cols() || (self.num_cols() - starting_pos.1) < word.len() {
+                    return false;
+                }
+                for field_xy in Self::rev(word.len() - 1, 0) {
+                    if self
+                        .get(starting_pos.0 - field_xy, starting_pos.1 + field_xy)
+                        .unwrap()
+                        != word.chars().nth(field_xy).unwrap()
+                    {
+                        return false;
+                    }
+                }
+                true
+            }
+        }
+    }
+
+    pub fn rev(upper: usize, lower: usize) -> Rev<RangeInclusive<usize>> {
+        (lower..=upper).rev()
     }
 }
