@@ -55,6 +55,19 @@ impl Conv {
             .collect()
     }
 
+    pub fn to_u32s_sep(line: &str, sep: &str) -> Result<Vec<u32>, String> {
+        line.split(sep)
+            .map(|u| {
+                u.parse::<u32>().map_err(|e| {
+                    format!(
+                        "Conv::to_u32s_sep: couldn't convert {} to u32! Error: {}",
+                        u, e
+                    )
+                })
+            })
+            .collect()
+    }
+
     pub fn to_string(lines: &Vec<String>) -> String {
         lines.join("\n")
     }

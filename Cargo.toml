@@ -46,6 +46,14 @@ path = "src/2024/day-03.rs"
 name = "2024-day-04"
 path = "src/2024/day-04.rs"
 
+[[bin]]
+name = "2024-day-05"
+path = "src/2024/day-05.rs"
+
+[[bin]]
+name = "2024-day-06"
+path = "src/2024/day-06.rs"
+
 [dependencies]
 anyhow = "1.0.79"
 regex = "1.10.3"
